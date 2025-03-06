@@ -107,8 +107,7 @@ DF_FISH_CATCH <- full_df |>
     OBS_VALUE,
     UNIT_MEASURE,
     COMMENT,
-    OBS_STATUS,
-
+    OBS_STATUS
   )
 
 write_csv(DF_FISH_CATCH,"data/DF_FISH_CATCH.csv")
