@@ -66,20 +66,30 @@ full_df <- all_df |>
       paste(as.character(year),season,sep = "-"),
       as.character(year)
     ),
-    AREA = paste0("2023_YFT_", area)
+    # ARE and FISHERY are relative to year and fish species
+    # so we write that dependency explicitly
+    # unless they are NA or "all", in which case they refer to _T
+    AREA = if_else(
+        area |> str_ends("[:digit:]"),
+      paste0("2023_YFT_", area),
+      "_T"
+    ),
+    FISHERY = if_else(
+        fishery |> str_ends("[:digit:]"),
+      paste(AREA,fishery,sep = "_"),
+      "_T"
+    )
   ) |>
   # capitalise names where necessary
   rename(
-    FISHERY := fishery,
     AGE := age,
     STAGE := stage,
   ) |>
   # input observation attributes
   mutate(
     UNIT_MEASURE = case_when(
-
-      indicator == "f" ~ "RATIO",
-
+      INDICATOR == "f" ~ "RATIO",
+      .default = "",
     ),
     COMMENT = "",
     OBS_STATUS = "",
@@ -100,3 +110,5 @@ DF_FISH_CATCH <- full_df |>
     OBS_STATUS,
 
   )
+
+write_csv(DF_FISH_CATCH,"data/DF_FISH_CATCH.csv")
