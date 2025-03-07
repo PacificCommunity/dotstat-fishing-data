@@ -1,0 +1,11 @@
+INDICATOR,name
+sb,spawning biomass
+catch,catch
+obs,observed value
+pred,predicted value
+f,fishing mortality
+n,numbers at age
+rec,recruitment
+tb,total biomass
+sbf0,spawning biomass in the absence of fishing
+dep,depletion ratio sb/sbf0
