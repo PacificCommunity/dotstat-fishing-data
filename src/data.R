@@ -73,6 +73,7 @@ full_df <- all_df |>
   # input frequency of observation (annual if not seasonal)
   # and write time period in SDMX style (2024, 2025-1)
   mutate(
+    DATAFLOW = "SPC:DF_SAM_CATCH(1.0)",
     YEAR_MODEL = year_of_model,
     SPECIES = species_in_model,
     FREQ = if_else(is.na(season), "A", "Q"),
@@ -117,6 +118,7 @@ full_df <- all_df |>
 
 DF_FISH_CATCH <- full_df |>
   select(
+    DATAFLOW,
     YEAR_MODEL, # dim
     SPECIES, # dim
     FREQ, # dim common
