@@ -1,0 +1,12 @@
+ssb,biomass,?
+t,catch,tonnes
+obs,Catch per Unit of Effort observed,?
+pred,Catch per Unit of Effort predicted,?
+f,Fishing mortality,ratio
+n,natage,n (number)
+rec,record?,n
+catch,catch,tonnes
+tb,?,?
+sb,Spawning biomass,?
+sbf0,Spawning biomass predicted in the absence of fishing,?
+dep,ratio sb/sbf0,ratio
