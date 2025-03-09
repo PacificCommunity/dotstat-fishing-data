@@ -1,49 +1,21 @@
+library(testthat)
 source("src/functions.R")
 
-main_dsd_sources <- c(
-  "biomass",
-  "catch",
-  "cpue",
-  "f_aggregate",
-  "f_annual",
-  "f_season",
-  "f_stage",
-  "natage",
-  "summary"
-)
 
-names(main_dsd_sources) <- main_dsd_sources
+year_of_model <- "2023"
+species_in_model <- "BFT"
 
-# indicator variable names as they appear in output data
-raw_indicators <- c(
-  "ssb",
-  "t",
-  "obs",
-  "pred",
-  "f",
-  "n",
-  "rec",
-  "catch",
-  "tb",
-  "sb",
-  "sbf0",
-  "dep"
-)
+this_repo_name <- get_repo_name(species_in_model, year_of_model)
+
+# Get all relevant TAF objects for this year species
 
 all_df <- main_dsd_sources |>
   map_df(
-    \(x) x |>
-      TAF_obj_url() |>
-      read_csv() |>
-      indicators_to_long(raw_indicators) |>
-      mutate(
-        across(
-          any_of(c("season", "area", "fishery", "age", "stage")),
-          as.character
-        )
-      ),
-    .id = "source"
+    \(x) x |> read_csv_taf_poss(this_repo_name),
+        .id = "source"
   )
+
+# wrangle to dataflow SDMX compatible
 
 full_df <- all_df |>
   # fill in missing dimension as _T dimensions
@@ -58,8 +30,9 @@ full_df <- all_df |>
   # input frequency of observation (annual if not seasonal)
   # and write time period in SDMX style (2024, 2025-1)
   mutate(
-    YEAR_MODEL = "2023",
-    SPECIES = "YFT",
+    DATAFLOW = "SPC:DF_SAM_CATCH(1.0)",
+    YEAR_MODEL = year_of_model,
+    SPECIES = species_in_model,
     FREQ = if_else(is.na(season), "A", "Q"),
     TIME_PERIOD = if_else(
       FREQ == "Q",
@@ -71,7 +44,7 @@ full_df <- all_df |>
     # unless they are NA or "all", in which case they refer to _T
     AREA = if_else(
         area |> str_ends("[:digit:]"),
-      paste0("2023_YFT_", area),
+      paste(year_of_model, species_in_model, area, sep = "-"),
       "_T"
     ),
     FISHERY = if_else(
@@ -88,26 +61,66 @@ full_df <- all_df |>
   # input observation attributes
   mutate(
     UNIT_MEASURE = case_when(
-      INDICATOR == "f" ~ "RATIO",
+      INDICATOR == "f" ~ "I", # instantaneous rate
+      INDICATOR %in% c("obs","pred") ~ "Q", # model quantity
+      INDICATOR %in% c("sb", "tb", "sbf0", "catch") ~ "T", # tonnes
+      INDICATOR == "n" ~ "NI", # number of individuals
+      INDICATOR == "rec" ~ "NR", # number of recruits
+      INDICATOR == "dep" ~ "R", # ratio
       .default = "",
     ),
     COMMENT = "",
-    OBS_STATUS = "",
+    OBS_STATUS = ""
   )
 
 DF_FISH_CATCH <- full_df |>
   select(
-    YEAR_MODEL,
-    SPECIES,
-    FREQ,
-    TIME_PERIOD,
-    AREA,
-    FISHERY,
-    INDICATOR,
-    OBS_VALUE,
-    UNIT_MEASURE,
-    COMMENT,
-    OBS_STATUS
+    DATAFLOW,
+    YEAR_MODEL, # dim
+    SPECIES, # dim
+    FREQ, # dim common
+    TIME_PERIOD, # dim common
+    AREA, # dim common
+    FISHERY, # dim
+    AGE, # dim
+    STAGE, # dim
+    INDICATOR, # dim common
+    OBS_VALUE, # measure
+    UNIT_MEASURE, # attr
+    COMMENT, # attr
+    OBS_STATUS # attr
   )
 
-write_csv(DF_FISH_CATCH,"data/DF_FISH_CATCH.csv")
+# Data output sanity testing:
+
+test_that("We don't create conflicting observation values binding the tables together",
+  expect_equal(
+    0,
+    DF_FISH_CATCH |>
+      add_count(TIME_PERIOD,AREA,FISHERY,INDICATOR,AGE,STAGE) |>
+      filter(n > 1) |>
+      nrow()
+  )
+)
+
+
+test_that("No unit of measure is forgotten",
+  expect_equal(
+    0,
+    DF_FISH_CATCH |>
+      filter(is_empty(UNIT_MEASURE)) |>
+      nrow()
+  )
+)
+
+
+# write to file
+
+write_delim(
+  DF_FISH_CATCH,
+  paste0("data/DF_FISH_CATCH_",
+    year_of_model, "_",
+    species_in_model,
+    ".csv"),
+  delim = ";"
+)
