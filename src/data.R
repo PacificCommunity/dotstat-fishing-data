@@ -3,7 +3,7 @@ source("src/functions.R")
 
 
 year_of_model <- "2023"
-species_in_model <- "BFT"
+species_in_model <- "YFT"
 
 this_repo_name <- get_repo_name(species_in_model, year_of_model)
 
@@ -36,7 +36,7 @@ full_df <- all_df |>
     FREQ = if_else(is.na(season), "A", "Q"),
     TIME_PERIOD = if_else(
       FREQ == "Q",
-      paste(as.character(year),season,sep = "-"),
+      paste(as.character(year),season,sep = "_"),
       as.character(year)
     ),
     # ARE and FISHERY are relative to year and fish species
@@ -44,7 +44,7 @@ full_df <- all_df |>
     # unless they are NA or "all", in which case they refer to _T
     AREA = if_else(
         area |> str_ends("[:digit:]"),
-      paste(year_of_model, species_in_model, area, sep = "-"),
+      paste(year_of_model, species_in_model, area, sep = "_"),
       "_T"
     ),
     FISHERY = if_else(
