@@ -3,7 +3,7 @@ source("src/functions.R")
 
 
 year_of_model <- "2023"
-species_in_model <- "YFT"
+species_in_model <- "BFT"
 
 this_repo_name <- paste(
   "ofp-sam",
@@ -42,17 +42,8 @@ raw_indicators <- c(
 
 all_df <- main_dsd_sources |>
   map_df(
-    \(x) x |>
-      TAF_obj_url(project_name = this_repo_name) |>
-      read_csv() |>
-      indicators_to_long(raw_indicators) |>
-      mutate(
-        across(
-          any_of(c("season", "area", "fishery", "age", "stage")),
-          as.character
-        )
-      ),
-    .id = "source"
+    \(x) x |> read_csv_taf_poss(this_repo_name),
+        .id = "source"
   )
 
 
@@ -158,8 +149,11 @@ test_that("No unit of measure is forgotten",
   )
 )
 
-write_csv(DF_FISH_CATCH,
+write_delim(
+  DF_FISH_CATCH,
   paste0("data/DF_FISH_CATCH_",
-  year_of_model, "_",
-  species_in_model, "_",
-  ".csv"))
+    year_of_model, "_",
+    species_in_model,
+    ".csv"),
+  delim = ";"
+)

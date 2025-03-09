@@ -32,3 +32,22 @@ df |>
     values_to = "OBS_VALUE"
   )
 }
+
+
+read_csv_taf <- function(taf_name, repo_name) {
+  taf_name |>
+      TAF_obj_url(project_name = this_repo_name) |>
+      read_csv() |>
+      indicators_to_long(raw_indicators) |>
+      mutate(
+        across(
+          any_of(c("season", "area", "fishery", "age", "stage")),
+          as.character
+        )
+      )
+}
+
+read_csv_taf_poss <- possibly(
+  read_csv_taf,
+  tibble()
+)
