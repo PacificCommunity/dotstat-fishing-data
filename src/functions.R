@@ -51,3 +51,40 @@ read_csv_taf_poss <- possibly(
   read_csv_taf,
   tibble()
 )
+
+get_repo_name <- function(species,year) {
+  this_repo_name <- paste(
+    "ofp-sam",
+    str_to_lower(species),
+    year,
+    "diagnostic",
+    sep = "-")
+}
+
+main_dsd_sources <- c(
+  "biomass",
+  "catch",
+  "cpue",
+  "f_aggregate",
+  "f_annual",
+  "f_season",
+  "f_stage",
+  "natage",
+  "summary"
+)
+
+names(main_dsd_sources) <- main_dsd_sources
+
+# indicator variable names as they appear in output data
+raw_indicators <- c(
+  "obs",
+  "pred",
+  "f",
+  "n",
+  "rec",
+  "catch",
+  "tb",
+  "sb",
+  "sbf0",
+  "dep"
+)

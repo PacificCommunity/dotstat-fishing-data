@@ -5,40 +5,9 @@ source("src/functions.R")
 year_of_model <- "2023"
 species_in_model <- "BFT"
 
-this_repo_name <- paste(
-  "ofp-sam",
-  str_to_lower(species_in_model),
-  year_of_model,
-  "diagnostic",
-  sep = "-")
+this_repo_name <- get_repo_name(species_in_model, year_of_model)
 
-main_dsd_sources <- c(
-  "biomass",
-  "catch",
-  "cpue",
-  "f_aggregate",
-  "f_annual",
-  "f_season",
-  "f_stage",
-  "natage",
-  "summary"
-)
-
-names(main_dsd_sources) <- main_dsd_sources
-
-# indicator variable names as they appear in output data
-raw_indicators <- c(
-  "obs",
-  "pred",
-  "f",
-  "n",
-  "rec",
-  "catch",
-  "tb",
-  "sb",
-  "sbf0",
-  "dep"
-)
+# Get all relevant TAF objects for this year species
 
 all_df <- main_dsd_sources |>
   map_df(
@@ -46,10 +15,7 @@ all_df <- main_dsd_sources |>
         .id = "source"
   )
 
-
-all_df |>
-  group_by(year,season,area,INDICATOR) |>
-  count()
+# wrangle to dataflow SDMX compatible
 
 full_df <- all_df |>
   # fill in missing dimension as _T dimensions
@@ -125,8 +91,6 @@ DF_FISH_CATCH <- full_df |>
     OBS_STATUS # attr
   )
 
-DF_FISH_CATCH$STAGE |> unique()
-
 # Data output sanity testing:
 
 test_that("We don't create conflicting observation values binding the tables together",
@@ -148,6 +112,9 @@ test_that("No unit of measure is forgotten",
       nrow()
   )
 )
+
+
+# write to file
 
 write_delim(
   DF_FISH_CATCH,
