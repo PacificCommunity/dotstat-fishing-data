@@ -12,7 +12,7 @@ this_repo_name <- get_repo_name(species_in_model, year_of_model)
 all_df <- main_dsd_sources |>
   map_df(
     \(x) x |> read_csv_taf_poss(this_repo_name),
-        .id = "source"
+    .id = "source"
   )
 
 # wrangle to dataflow SDMX compatible
@@ -36,7 +36,9 @@ full_df <- all_df |>
     FREQ = if_else(is.na(season), "A", "Q"),
     TIME_PERIOD = if_else(
       FREQ == "Q",
-      paste(as.character(year),season,sep = "_"),
+      # quarter time format https://wiki.sdmxcloud.org/SDMX_Time_Formats
+      # Q	Quarterly	YYYY-Qn	2010-Q1
+      paste(as.character(year),season,sep = "-Q"),
       as.character(year)
     ),
     # ARE and FISHERY are relative to year and fish species
