@@ -1,9 +1,8 @@
 library(testthat)
 source("src/functions.R")
 
-
-year_of_model <- "2023"
-species_in_model <- "YFT"
+year_of_model <- "2024"
+species_in_model <- "ALB"
 
 this_repo_name <- get_repo_name(species_in_model, year_of_model)
 
@@ -30,10 +29,8 @@ full_df <- all_df |>
   # input frequency of observation (annual if not seasonal)
   # and write time period in SDMX style (2024, 2025-1)
   mutate(
-    DATAFLOW = "SPC:DF_SAM_CATCH(1.0)",
-    YEAR_MODEL = year_of_model,
-    SPECIES = species_in_model,
-    FREQ = if_else(is.na(season), "A", "Q"),
+    FREQ = if_else("season" %in% names(all_df) & is.na(season), "A", "Q"),
+    #DATAFLOW = "SPC:DF_SAM_CATCH(1.0)",
     TIME_PERIOD = if_else(
       FREQ == "Q",
       # quarter time format https://wiki.sdmxcloud.org/SDMX_Time_Formats
@@ -41,6 +38,8 @@ full_df <- all_df |>
       paste(as.character(year),season,sep = "-Q"),
       as.character(year)
     ),
+    YEAR_MODEL = year_of_model,
+    SPECIES = species_in_model,
     # ARE and FISHERY are relative to year and fish species
     # so we write that dependency explicitly
     # unless they are NA or "all", in which case they refer to _T
@@ -77,7 +76,7 @@ full_df <- all_df |>
 
 DF_FISH_CATCH <- full_df |>
   select(
-    DATAFLOW,
+    #DATAFLOW,
     YEAR_MODEL, # dim
     SPECIES, # dim
     FREQ, # dim common
@@ -91,7 +90,8 @@ DF_FISH_CATCH <- full_df |>
     UNIT_MEASURE, # attr
     COMMENT, # attr
     OBS_STATUS # attr
-  )
+  ) |>
+  unique()
 
 # Data output sanity testing:
 
@@ -105,7 +105,6 @@ test_that("We don't create conflicting observation values binding the tables tog
   )
 )
 
-
 test_that("No unit of measure is forgotten",
   expect_equal(
     0,
@@ -114,7 +113,7 @@ test_that("No unit of measure is forgotten",
       nrow()
   )
 )
-
+ 
 
 # write to file
 
@@ -126,3 +125,6 @@ write_delim(
     ".csv"),
   delim = ";"
 )
+
+DF_FISH_CATCH$FISHERY |> unique()
+DF_FISH_CATCH$AREA |> unique()
